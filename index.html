@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>롱(Long)을 위한 한국어 단어 교과서</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; }
+    body { background: #f4f7fb; color: #222; padding: 20px; max-width: 800px; margin: 0 auto; }
+    header { background: #3b82f6; color: white; padding: 24px; border-radius: 16px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(59,130,246,0.2); }
+    header h1 { font-size: 24px; margin-bottom: 6px; }
+    header p { font-size: 14px; opacity: 0.9; }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; justify-content: center; }
+    .tab-btn { padding: 10px 16px; border: none; border-radius: 20px; background: #e2e8f0; color: #475569; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .tab-btn.active { background: #3b82f6; color: white; }
+    .card { background: white; border-radius: 14px; padding: 18px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+    .word-info h2 { font-size: 22px; color: #1e293b; margin-bottom: 4px; }
+    .word-info .meaning { font-size: 16px; color: #2563eb; font-weight: bold; margin-bottom: 8px; }
+    .word-info .example { font-size: 14px; color: #475569; background: #f8fafc; padding: 8px 12px; border-radius: 8px; }
+    .word-info .example span { display: block; color: #64748b; font-size: 13px; margin-top: 2px; }
+    .btns { display: flex; flex-direction: column; gap: 8px; margin-left: 12px; }
+    button.speak-btn { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 10px 14px; border-radius: 10px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+    button.speak-btn:hover { background: #dbeafe; }
+    .quiz-box { background: white; padding: 24px; border-radius: 16px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .quiz-q { font-size: 20px; font-weight: bold; margin-bottom: 20px; }
+    .quiz-opts { display: grid; gap: 10px; }
+    .quiz-opt { padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; background: white; font-size: 16px; cursor: pointer; font-weight: bold; }
+    .quiz-opt:hover { border-color: #3b82f6; background: #eff6ff; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📘 롱(Long)을 위한 한국어 단어장</h1>
+  <p>Từ vựng tiếng Hàn thực tế dành cho Long (클릭하면 발음이 나옵니다)</p>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="showCategory('school', this)">🏫 학교 (Trường học)</button>
+  <button class="tab-btn" onclick="showCategory('emotion', this)">😊 감정/상태 (Cảm xúc)</button>
+  <button class="tab-btn" onclick="showCategory('verb', this)">🏃 핵심 동사 (Động từ)</button>
+  <button class="tab-btn" onclick="showCategory('hanja', this)">⭐ 한자어 팁 (Hán-Việt)</button>
+  <button class="tab-btn" onclick="showQuiz(this)">🎯 미니 퀴즈 (Quiz)</button>
+</div>
+
+<div id="word-list"></div>
+
+<div id="quiz-area" class="quiz-box hidden">
+  <div class="quiz-q" id="quiz-question">문제</div>
+  <div class="quiz-opts" id="quiz-options"></div>
+  <p id="quiz-feedback" style="margin-top:16px; font-weight:bold; font-size:16px;"></p>
+  <button class="tab-btn active" style="margin-top:16px;" onclick="nextQuiz()">다음 문제 (Câu tiếp theo) ➡️</button>
+</div>
+
+<script>
+  const data = {
+    school: [
+      { ko: "교과서", vi: "Sách giáo khoa", ex: "교과서를 펴세요.", exVi: "Hãy mở sách giáo khoa ra." },
+      { ko: "필기구", vi: "Đồ dùng học tập", ex: "필기구 좀 빌려줄래?", exVi: "Cho tớ mượn đồ dùng học tập với?" },
+      { ko: "숙제", vi: "Bài tập về nhà", ex: "오늘 숙제가 뭐예요?", exVi: "Bài tập về nhà hôm nay là gì?" },
+      { ko: "쉬는 시간", vi: "Giờ ra chơi", ex: "쉬는 시간에 매점에 가자!", exVi: "Giờ ra chơi cùng đi căng-tin nhé!" },
+      { ko: "급식", vi: "Bữa ăn trưa ở trường", ex: "오늘 급식 메뉴가 맛있어.", exVi: "Thực đơn bữa trưa nay ngon lắm." },
+      { ko: "질문", vi: "Câu hỏi", ex: "선생님, 질문 있어요!", exVi: "Thưa thầy/cô, em có câu hỏi ạ!" }
+    ],
+    emotion: [
+      { ko: "배고프다", vi: "Đói bụng", ex: "나 지금 너무 배고파.", exVi: "Bây giờ tớ đói bụng quá." },
+      { ko: "배부르다", vi: "No bụng", ex: "많이 먹어서 배불러요.", exVi: "Ăn nhiều nên no bụng rồi ạ." },
+      { ko: "피곤하다", vi: "Mệt mỏi", ex: "어제 늦게 자서 피곤해.", exVi: "Hôm qua ngủ muộn nên tớ mệt." },
+      { ko: "재미있다", vi: "Thú vị / Vui", ex: "한국어 공부가 재미있어요.", exVi: "Việc học tiếng Hàn rất thú vị." },
+      { ko: "어렵다", vi: "Khó", ex: "이 문제는 조금 어려워요.", exVi: "Câu hỏi này hơi khó một chút." },
+      { ko: "괜찮다", vi: "Không sao / Ổn", ex: "괜찮아요, 걱정하지 마세요.", exVi: "Không sao đâu, đừng lo lắng." }
+    ],
+    verb: [
+      { ko: "알다 / 모르다", vi: "Biết / Không biết", ex: "잘 모르겠어요. 다시 알려주세요.", exVi: "Tôi không rõ lắm. Hãy chỉ lại cho tôi nhé." },
+      { ko: "기다리다", vi: "Chờ đợi", ex: "잠깐만 기다려 줘!", exVi: "Đợi tớ một chút nhé!" },
+      { ko: "도와주다", vi: "Giúp đỡ", ex: "좀 도와줄 수 있어?", exVi: "Cậu có thể giúp tớ một chút không?" },
+      { ko: "빌리다", vi: "Mượn", ex: "지우개 좀 빌릴 수 있을까?", exVi: "Tớ mượn cục tẩy một chút được không?" }
+    ],
+    hanja: [
+      { ko: "가족 (Gia tộc)", vi: "Gia đình", ex: "우리 가족은 네 명이에요.", exVi: "Gia đình tôi có 4 người." },
+      { ko: "준비 (Chuẩn bị)", vi: "Chuẩn bị", ex: "수업 준비 다 했어요?", exVi: "Đã chuẩn bị xong cho tiết học chưa?" },
+      { ko: "시간 (Thời gian)", vi: "Thời gian", ex: "지금 몇 시예요? 시간이 없어요.", exVi: "Bây giờ là mấy giờ? Không có thời gian rồi." },
+      { ko: "약속 (Ước thúc)", vi: "Lời hứa / Cuộc hẹn", ex: "오늘 친구랑 약속이 있어요.", exVi: "Hôm nay tôi có hẹn với bạn." },
+      { ko: "연습 (Luyện tập)", vi: "Luyện tập", ex: "한국어 발음을 연습해요.", exVi: "Tôi luyện tập phát âm tiếng Hàn." }
+    ]
+  };
+
+  function speak(text) {
+    window.speechSynthesis.cancel();
+    const cleanText = text.replace(/\(.*?\)/g, '');
+    const msg = new SpeechSynthesisUtterance(cleanText);
+    msg.lang = 'ko-KR';
+    msg.rate = 0.9;
+    window.speechSynthesis.speak(msg);
+  }
+
+  function showCategory(cat, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    document.getElementById('quiz-area').classList.add('hidden');
+    const list = document.getElementById('word-list');
+    list.classList.remove('hidden');
+    list.innerHTML = '';
+
+    data[cat].forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="word-info">
+          <h2>${item.ko}</h2>
+          <div class="meaning">${item.vi}</div>
+          <div class="example">${item.ex}<span>${item.exVi}</span></div>
+        </div>
+        <div class="btns">
+          <button class="speak-btn" onclick="speak('${item.ko}')">🔊 단어 듣기</button>
+          <button class="speak-btn" onclick="speak('${item.ex}')">🗣️ 예문 듣기</button>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  }
+
+  const allWords = [...data.school, ...data.emotion, ...data.verb, ...data.hanja];
+  let currentAnswer = null;
+
+  function showQuiz(btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('word-list').classList.add('hidden');
+    document.getElementById('quiz-area').classList.remove('hidden');
+    nextQuiz();
+  }
+
+  function nextQuiz() {
+    document.getElementById('quiz-feedback').innerText = '';
+    const shuffled = [...allWords].sort(() => 0.5 - Math.random());
+    currentAnswer = shuffled[0];
+    const options = shuffled.slice(0, 4).sort(() => 0.5 - Math.random());
+
+    document.getElementById('quiz-question').innerText = `"${currentAnswer.vi}" 는 한국어로 무엇일까요?`;
+    const optBox = document.getElementById('quiz-options');
+    optBox.innerHTML = '';
+
+    options.forEach(opt => {
+      const b = document.createElement('button');
+      b.className = 'quiz-opt';
+      b.innerText = opt.ko;
+      b.onclick = () => {
+        speak(opt.ko);
+        if (opt.ko === currentAnswer.ko) {
+          document.getElementById('quiz-feedback').innerText = '🎉 정답입니다! (Chính xác!)';
+          document.getElementById('quiz-feedback').style.color = '#16a34a';
+        } else {
+          document.getElementById('quiz-feedback').innerText = `❌ 아쉬워요! 정답은 "${currentAnswer.ko}" 입니다.`;
+          document.getElementById('quiz-feedback').style.color = '#dc2626';
+        }
+      };
+      optBox.appendChild(b);
+    });
+  }
+
+  showCategory('school');
+</script>
+
+</body>
+</html>
